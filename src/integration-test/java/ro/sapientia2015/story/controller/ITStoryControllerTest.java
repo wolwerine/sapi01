@@ -189,10 +189,10 @@ public class ITStoryControllerTest {
     @ExpectedDatabase("storyData-delete-expected.xml")
     public void deleteById() throws Exception {
         String expectedRedirectViewPath = StoryTestUtil.createRedirectViewPath(StoryController.REQUEST_MAPPING_LIST);
-        mockMvc.perform(get("/story/delete/{id}", 1L))
+        mockMvc.perform(get("/story/delete/{id}", 2L))
                 .andExpect(status().isOk())
                 .andExpect(view().name(expectedRedirectViewPath))
-                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is("Story entry: Foo was deleted.")));
+                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is("Story entry: Bar was deleted.")));
     }
 
     @Test
