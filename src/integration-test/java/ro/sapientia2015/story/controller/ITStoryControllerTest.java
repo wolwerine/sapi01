@@ -137,7 +137,7 @@ public class ITStoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(expectedRedirectViewPath))
                 .andExpect(model().attribute(StoryController.PARAMETER_ID, is("3")))
-                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is(" entry: title was added.")));
+                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is("Story entry: title was added.")));
     }
 
     @Test
@@ -192,7 +192,7 @@ public class ITStoryControllerTest {
         mockMvc.perform(get("/story/delete/{id}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(view().name(expectedRedirectViewPath))
-                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is(" entry: Foo was deleted.")));
+                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is("Story entry: Foo was deleted.")));
     }
 
     @Test
@@ -280,7 +280,7 @@ public class ITStoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(expectedRedirectViewPath))
                 .andExpect(model().attribute(StoryController.PARAMETER_ID, is("1")))
-                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is(" entry: title was updated.")));
+                .andExpect(flash().attribute(StoryController.FLASH_MESSAGE_KEY_FEEDBACK, is("Story entry: title was updated.")));
     }
 
     @Test
