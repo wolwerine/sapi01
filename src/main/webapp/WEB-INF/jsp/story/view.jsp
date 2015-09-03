@@ -18,6 +18,7 @@
         <div class="action-buttons">
             <a href="/story/update/${story.id}" class="btn btn-primary"><spring:message code="label.update.story.link"/></a>
             <a id="delete-story-link" class="btn btn-primary"><spring:message code="label.delete.story.link"/></a>
+            <a href="/story/comments/list" class="btn btn-primary"><spring:message code="label.add.comment.link"/></a>
         </div>
     </div>
     <script id="template-delete-story-confirmation-dialog" type="text/x-handlebars-template">
