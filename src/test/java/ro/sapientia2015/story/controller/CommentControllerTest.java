@@ -16,12 +16,16 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
+import ro.sapientia2015.story.CommentTestUtil;
 import ro.sapientia2015.story.StoryTestUtil;
 import ro.sapientia2015.story.config.UnitTestContext;
 import ro.sapientia2015.story.controller.StoryController;
+import ro.sapientia2015.story.dto.CommentDTO;
 import ro.sapientia2015.story.dto.StoryDTO;
 import ro.sapientia2015.story.exception.NotFoundException;
+import ro.sapientia2015.story.model.Comment;
 import ro.sapientia2015.story.model.Story;
+import ro.sapientia2015.story.service.CommentService;
 import ro.sapientia2015.story.service.StoryService;
 
 import javax.annotation.Resource;
@@ -49,36 +53,36 @@ public class CommentControllerTest {
     private static final String FIELD_DESCRIPTION = "description";
     private static final String FIELD_TITLE = "title";
 
-    private StoryController controller;
+    private CommentController controller;
 
     private MessageSource messageSourceMock;
 
-    private StoryService serviceMock;
+    private CommentService serviceMock;
 
     @Resource
     private Validator validator;
 
     @Before
     public void setUp() {
-        controller = new StoryController();
+        controller = new CommentController();
 
         messageSourceMock = mock(MessageSource.class);
         ReflectionTestUtils.setField(controller, "messageSource", messageSourceMock);
 
-        serviceMock = mock(StoryService.class);
+        serviceMock = mock(CommentService.class);
         ReflectionTestUtils.setField(controller, "service", serviceMock);
     }
 
     @Test
-    public void showAddStoryForm() {
+    public void showAddCommentForm() {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
         String view = controller.showAddForm(model);
 
         verifyZeroInteractions(messageSourceMock, serviceMock);
-        assertEquals(StoryController.VIEW_ADD, view);
+        assertEquals(CommentController.VIEW_ADD, view);
 
-        StoryDTO formObject = (StoryDTO) model.asMap().get(StoryController.MODEL_ATTRIBUTE);
+        CommentDTO formObject = (CommentDTO) model.asMap().get(CommentController.MODEL_ATTRIBUTE);
 
         assertNull(formObject.getId());
         assertNull(formObject.getDescription());
@@ -87,36 +91,36 @@ public class CommentControllerTest {
 
     @Test
     public void add() {
-        StoryDTO formObject = StoryTestUtil.createFormObject(null, StoryTestUtil.DESCRIPTION, StoryTestUtil.TITLE);
+        CommentDTO formObject = CommentTestUtil.createFormObject(null, CommentTestUtil.DESCRIPTION, CommentTestUtil.TITLE);
 
-        Story model = StoryTestUtil.createModel(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION, StoryTestUtil.TITLE);
+        Comment model = CommentTestUtil.createModel(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION, CommentTestUtil.TITLE);
         when(serviceMock.add(formObject)).thenReturn(model);
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
 
-        initMessageSourceForFeedbackMessage(StoryController.FEEDBACK_MESSAGE_KEY_ADDED);
+        initMessageSourceForFeedbackMessage(CommentController.FEEDBACK_MESSAGE_KEY_ADDED);
 
         String view = controller.add(formObject, result, attributes);
 
         verify(serviceMock, times(1)).add(formObject);
         verifyNoMoreInteractions(serviceMock);
 
-        String expectedView = StoryTestUtil.createRedirectViewPath(StoryController.REQUEST_MAPPING_VIEW);
+        String expectedView = CommentTestUtil.createRedirectViewPath(CommentController.REQUEST_MAPPING_VIEW);
         assertEquals(expectedView, view);
 
-        assertEquals(Long.valueOf((String) attributes.get(StoryController.PARAMETER_ID)), model.getId());
+        assertEquals(Long.valueOf((String) attributes.get(CommentController.PARAMETER_ID)), model.getId());
 
-        assertFeedbackMessage(attributes, StoryController.FEEDBACK_MESSAGE_KEY_ADDED);
+        assertFeedbackMessage(attributes, CommentController.FEEDBACK_MESSAGE_KEY_ADDED);
     }
 
     @Test
-    public void addEmptyStory() {
-        StoryDTO formObject = StoryTestUtil.createFormObject(null, "", "");
+    public void addEmptyComment() {
+        CommentDTO formObject = CommentTestUtil.createFormObject(null, "", "");
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
@@ -125,47 +129,47 @@ public class CommentControllerTest {
 
         verifyZeroInteractions(serviceMock, messageSourceMock);
 
-        assertEquals(StoryController.VIEW_ADD, view);
+        assertEquals(CommentController.VIEW_ADD, view);
         assertFieldErrors(result, FIELD_TITLE);
     }
 
-    @Test
-    public void addWithTooLongDescriptionAndTitle() {
-        String description = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_DESCRIPTION + 1);
-        String title = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_TITLE + 1);
-
-        StoryDTO formObject = StoryTestUtil.createFormObject(null, description, title);
-
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
-        BindingResult result = bindAndValidate(mockRequest, formObject);
-
-        RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
-
-        String view = controller.add(formObject, result, attributes);
-
-        verifyZeroInteractions(serviceMock, messageSourceMock);
-
-        assertEquals(StoryController.VIEW_ADD, view);
-        assertFieldErrors(result, FIELD_DESCRIPTION, FIELD_TITLE);
-    }
+//    @Test
+//    public void addWithTooLongDescriptionAndTitle() {
+//        String description = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_DESCRIPTION + 1);
+//        String title = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_TITLE + 1);
+//
+//        StoryDTO formObject = StoryTestUtil.createFormObject(null, description, title);
+//
+//        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+//        BindingResult result = bindAndValidate(mockRequest, formObject);
+//
+//        RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
+//
+//        String view = controller.add(formObject, result, attributes);
+//
+//        verifyZeroInteractions(serviceMock, messageSourceMock);
+//
+//        assertEquals(StoryController.VIEW_ADD, view);
+//        assertFieldErrors(result, FIELD_DESCRIPTION, FIELD_TITLE);
+//    }
 
     @Test
     public void deleteById() throws NotFoundException {
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
 
-        Story model = StoryTestUtil.createModel(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION, StoryTestUtil.TITLE);
-        when(serviceMock.deleteById(StoryTestUtil.ID)).thenReturn(model);
+        Comment model = CommentTestUtil.createModel(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION, CommentTestUtil.TITLE);
+        when(serviceMock.deleteById(CommentTestUtil.ID)).thenReturn(model);
 
-        initMessageSourceForFeedbackMessage(StoryController.FEEDBACK_MESSAGE_KEY_DELETED);
+        initMessageSourceForFeedbackMessage(CommentController.FEEDBACK_MESSAGE_KEY_DELETED);
 
-        String view = controller.deleteById(StoryTestUtil.ID, attributes);
+        String view = controller.deleteById(CommentTestUtil.ID, attributes);
 
-        verify(serviceMock, times(1)).deleteById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).deleteById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
 
-        assertFeedbackMessage(attributes, StoryController.FEEDBACK_MESSAGE_KEY_DELETED);
+        assertFeedbackMessage(attributes, CommentController.FEEDBACK_MESSAGE_KEY_DELETED);
 
-        String expectedView = StoryTestUtil.createRedirectViewPath(StoryController.REQUEST_MAPPING_LIST);
+        String expectedView = CommentTestUtil.createRedirectViewPath(CommentController.REQUEST_MAPPING_LIST);
         assertEquals(expectedView, view);
     }
 
@@ -173,11 +177,11 @@ public class CommentControllerTest {
     public void deleteByIdWhenIsNotFound() throws NotFoundException {
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
 
-        when(serviceMock.deleteById(StoryTestUtil.ID)).thenThrow(new NotFoundException(""));
+        when(serviceMock.deleteById(CommentTestUtil.ID)).thenThrow(new NotFoundException(""));
 
-        controller.deleteById(StoryTestUtil.ID, attributes);
+        controller.deleteById(CommentTestUtil.ID, attributes);
 
-        verify(serviceMock, times(1)).deleteById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).deleteById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
     }
@@ -186,7 +190,7 @@ public class CommentControllerTest {
     public void findAll() {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
-        List<Story> models = new ArrayList<Story>();
+        List<Comment> models = new ArrayList<Comment>();
         when(serviceMock.findAll()).thenReturn(models);
 
         String view = controller.findAll(model);
@@ -195,56 +199,56 @@ public class CommentControllerTest {
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
 
-        assertEquals(StoryController.VIEW_LIST, view);
-        assertEquals(models, model.asMap().get(StoryController.MODEL_ATTRIBUTE_LIST));
+        assertEquals(CommentController.VIEW_LIST, view);
+        assertEquals(models, model.asMap().get(CommentController.MODEL_ATTRIBUTE_LIST));
     }
 
     @Test
     public void findById() throws NotFoundException {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
-        Story found = StoryTestUtil.createModel(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION, StoryTestUtil.TITLE);
-        when(serviceMock.findById(StoryTestUtil.ID)).thenReturn(found);
+        Comment found = CommentTestUtil.createModel(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION, CommentTestUtil.TITLE);
+        when(serviceMock.findById(CommentTestUtil.ID)).thenReturn(found);
 
-        String view = controller.findById(StoryTestUtil.ID, model);
+        String view = controller.findById(CommentTestUtil.ID, model);
 
-        verify(serviceMock, times(1)).findById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).findById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
 
-        assertEquals(StoryController.VIEW_VIEW, view);
-        assertEquals(found, model.asMap().get(StoryController.MODEL_ATTRIBUTE));
+        assertEquals(CommentController.VIEW_VIEW, view);
+        assertEquals(found, model.asMap().get(CommentController.MODEL_ATTRIBUTE));
     }
 
     @Test(expected = NotFoundException.class)
     public void findByIdWhenIsNotFound() throws NotFoundException {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
-        when(serviceMock.findById(StoryTestUtil.ID)).thenThrow(new NotFoundException(""));
+        when(serviceMock.findById(CommentTestUtil.ID)).thenThrow(new NotFoundException(""));
 
-        controller.findById(StoryTestUtil.ID, model);
+        controller.findById(CommentTestUtil.ID, model);
 
-        verify(serviceMock, times(1)).findById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).findById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
     }
 
     @Test
-    public void showUpdateStoryForm() throws NotFoundException {
+    public void showUpdateCommentForm() throws NotFoundException {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
-        Story updated = StoryTestUtil.createModel(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION, StoryTestUtil.TITLE);
-        when(serviceMock.findById(StoryTestUtil.ID)).thenReturn(updated);
+        Comment updated = CommentTestUtil.createModel(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION, CommentTestUtil.TITLE);
+        when(serviceMock.findById(CommentTestUtil.ID)).thenReturn(updated);
 
-        String view = controller.showUpdateForm(StoryTestUtil.ID, model);
+        String view = controller.showUpdateForm(CommentTestUtil.ID, model);
 
-        verify(serviceMock, times(1)).findById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).findById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
 
-        assertEquals(StoryController.VIEW_UPDATE, view);
+        assertEquals(CommentController.VIEW_UPDATE, view);
 
-        StoryDTO formObject = (StoryDTO) model.asMap().get(StoryController.MODEL_ATTRIBUTE);
+        CommentDTO formObject = (CommentDTO) model.asMap().get(CommentController.MODEL_ATTRIBUTE);
 
         assertEquals(updated.getId(), formObject.getId());
         assertEquals(updated.getDescription(), formObject.getDescription());
@@ -252,50 +256,50 @@ public class CommentControllerTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void showUpdateStoryFormWhenIsNotFound() throws NotFoundException {
+    public void showUpdateCommentFormWhenIsNotFound() throws NotFoundException {
         BindingAwareModelMap model = new BindingAwareModelMap();
 
-        when(serviceMock.findById(StoryTestUtil.ID)).thenThrow(new NotFoundException(""));
+        when(serviceMock.findById(CommentTestUtil.ID)).thenThrow(new NotFoundException(""));
 
-        controller.showUpdateForm(StoryTestUtil.ID, model);
+        controller.showUpdateForm(CommentTestUtil.ID, model);
 
-        verify(serviceMock, times(1)).findById(StoryTestUtil.ID);
+        verify(serviceMock, times(1)).findById(CommentTestUtil.ID);
         verifyNoMoreInteractions(serviceMock);
         verifyZeroInteractions(messageSourceMock);
     }
 
     @Test
     public void update() throws NotFoundException {
-        StoryDTO formObject = StoryTestUtil.createFormObject(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION_UPDATED, StoryTestUtil.TITLE_UPDATED);
+        CommentDTO formObject = CommentTestUtil.createFormObject(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION_UPDATED, CommentTestUtil.TITLE_UPDATED);
 
-        Story model = StoryTestUtil.createModel(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION_UPDATED, StoryTestUtil.TITLE_UPDATED);
+        Comment model = CommentTestUtil.createModel(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION_UPDATED, CommentTestUtil.TITLE_UPDATED);
         when(serviceMock.update(formObject)).thenReturn(model);
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
 
-        initMessageSourceForFeedbackMessage(StoryController.FEEDBACK_MESSAGE_KEY_UPDATED);
+        initMessageSourceForFeedbackMessage(CommentController.FEEDBACK_MESSAGE_KEY_UPDATED);
 
         String view = controller.update(formObject, result, attributes);
 
         verify(serviceMock, times(1)).update(formObject);
         verifyNoMoreInteractions(serviceMock);
 
-        String expectedView = StoryTestUtil.createRedirectViewPath(StoryController.REQUEST_MAPPING_VIEW);
+        String expectedView = CommentTestUtil.createRedirectViewPath(CommentController.REQUEST_MAPPING_VIEW);
         assertEquals(expectedView, view);
 
-        assertEquals(Long.valueOf((String) attributes.get(StoryController.PARAMETER_ID)), model.getId());
+        assertEquals(Long.valueOf((String) attributes.get(CommentController.PARAMETER_ID)), model.getId());
 
-        assertFeedbackMessage(attributes, StoryController.FEEDBACK_MESSAGE_KEY_UPDATED);
+        assertFeedbackMessage(attributes, CommentController.FEEDBACK_MESSAGE_KEY_UPDATED);
     }
 
     @Test
     public void updateEmpty() throws NotFoundException {
-        StoryDTO formObject = StoryTestUtil.createFormObject(StoryTestUtil.ID, "", "");
+        CommentDTO formObject = CommentTestUtil.createFormObject(CommentTestUtil.ID, "", "");
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
@@ -304,18 +308,18 @@ public class CommentControllerTest {
 
         verifyZeroInteractions(messageSourceMock, serviceMock);
 
-        assertEquals(StoryController.VIEW_UPDATE, view);
+        assertEquals(CommentController.VIEW_UPDATE, view);
         assertFieldErrors(result, FIELD_TITLE);
     }
 
     @Test
     public void updateWhenDescriptionAndTitleAreTooLong() throws NotFoundException {
-        String description = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_DESCRIPTION + 1);
-        String title = StoryTestUtil.createStringWithLength(Story.MAX_LENGTH_TITLE + 1);
+        String description = CommentTestUtil.createStringWithLength(Comment.MAX_LENGTH_DESCRIPTION + 1);
+        String title = CommentTestUtil.createStringWithLength(Comment.MAX_LENGTH_TITLE + 1);
 
-        StoryDTO formObject = StoryTestUtil.createFormObject(StoryTestUtil.ID, description, title);
+        CommentDTO formObject = CommentTestUtil.createFormObject(CommentTestUtil.ID, description, title);
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
@@ -324,17 +328,17 @@ public class CommentControllerTest {
 
         verifyZeroInteractions(messageSourceMock, serviceMock);
 
-        assertEquals(StoryController.VIEW_UPDATE, view);
+        assertEquals(CommentController.VIEW_UPDATE, view);
         assertFieldErrors(result, FIELD_DESCRIPTION, FIELD_TITLE);
     }
 
     @Test(expected = NotFoundException.class)
     public void updateWhenIsNotFound() throws NotFoundException {
-        StoryDTO formObject = StoryTestUtil.createFormObject(StoryTestUtil.ID, StoryTestUtil.DESCRIPTION_UPDATED, StoryTestUtil.TITLE_UPDATED);
+        CommentDTO formObject = CommentTestUtil.createFormObject(CommentTestUtil.ID, CommentTestUtil.DESCRIPTION_UPDATED, CommentTestUtil.TITLE_UPDATED);
 
         when(serviceMock.update(formObject)).thenThrow(new NotFoundException(""));
 
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/add");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest("POST", "/story/comments/add");
         BindingResult result = bindAndValidate(mockRequest, formObject);
 
         RedirectAttributesModelMap attributes = new RedirectAttributesModelMap();
@@ -347,7 +351,7 @@ public class CommentControllerTest {
     }
 
     private void assertFeedbackMessage(RedirectAttributes attributes, String messageCode) {
-        assertFlashMessages(attributes, messageCode, StoryController.FLASH_MESSAGE_KEY_FEEDBACK);
+        assertFlashMessages(attributes, messageCode, CommentController.FLASH_MESSAGE_KEY_FEEDBACK);
     }
 
     private void assertFieldErrors(BindingResult result, String... fieldNames) {
